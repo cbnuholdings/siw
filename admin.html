@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>운영자 콘솔 · SIW 2026 투자상담회</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 운영자 전용 — 20개사를 한 화면에 놓는 것이 목적이다. 밀도를 우선한다. */
+:root{
+  --cb-primary:#A8134A; --cb-deep:#6E0B2E; --cb-ink:#171214; --cb-body:#5B5155;
+  --cb-muted:#8B8085; --cb-paper:#FBF6F7; --cb-line:rgba(23,18,20,.09);
+  --siw-navy:#30365B; --ok:#0F7B4F; --warn:#B26B00; --off:#9A8E93;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Noto Sans KR',-apple-system,'Segoe UI',sans-serif;color:var(--cb-ink);background:#F7F7F9;font-size:14px;line-height:1.6}
+.wrap{max-width:1500px;margin:0 auto;padding:0 20px}
+h1,h2,h3{margin:0;line-height:1.35}
+code,.mono{font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+
+header{background:var(--siw-navy);color:#fff;position:sticky;top:0;z-index:60}
+.hd{display:flex;align-items:center;gap:14px;height:60px}
+.hd h1{font-size:16px;font-weight:800}
+.hd .tag{font-size:11.5px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.16);font-weight:700}
+.hd .grow{flex:1}
+.hd button{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:7px;padding:8px 14px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.hd button:hover{background:rgba(255,255,255,.22)}
+
+.btn{border:1px solid var(--cb-line);background:#fff;border-radius:7px;padding:7px 13px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;color:var(--cb-ink)}
+.btn:hover{border-color:var(--cb-primary);color:var(--cb-primary)}
+.btn.p{background:var(--cb-primary);color:#fff;border-color:var(--cb-primary)}
+.btn.p:hover{background:var(--cb-deep);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:4px 9px;font-size:12px}
+
+/* 로그인 */
+#gate{max-width:400px;margin:80px auto}
+.panel{background:#fff;border:1px solid var(--cb-line);border-radius:14px;padding:30px}
+.panel h2{font-size:18px;font-weight:800;margin-bottom:6px}
+.panel p{margin:0 0 20px;color:var(--cb-body);font-size:13.5px}
+input[type=text],input[type=password]{width:100%;padding:11px 13px;border:1px solid var(--cb-line);border-radius:8px;font-family:inherit;font-size:14px;margin-bottom:14px}
+input:focus{outline:2px solid rgba(168,19,74,.18);border-color:var(--cb-primary)}
+.msg{margin-top:12px;padding:11px 13px;border-radius:8px;font-size:13px;display:none}
+.msg.show{display:block}
+.msg.err{background:#FDF2F5;color:var(--cb-deep)}
+.msg.ok{background:#F0F8F4;color:var(--ok)}
+
+/* 요약 */
+#main{display:none;padding:22px 0 60px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:#fff;border:1px solid var(--cb-line);border-radius:11px;padding:15px 17px}
+.stat b{display:block;font-size:24px;font-weight:900;letter-spacing:-.02em}
+.stat span{font-size:12.5px;color:var(--cb-muted);font-weight:500}
+.stat.warn b{color:var(--warn)}
+.stat.ok b{color:var(--ok)}
+
+.bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.bar .grow{flex:1}
+.bar input[type=text]{width:220px;margin:0;padding:8px 12px}
+
+/* 표 */
+.tablewrap{background:#fff;border:1px solid var(--cb-line);border-radius:12px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
+th,td{text-align:left;padding:11px 12px;border-top:1px solid var(--cb-line);vertical-align:middle;white-space:nowrap}
+th{background:#FAFAFB;font-size:12px;font-weight:700;color:var(--cb-body);border-top:none;position:sticky;top:60px;z-index:5}
+tbody tr:hover{background:#FCFBFC}
+td.item{white-space:normal;max-width:280px;color:var(--cb-body);font-size:12.5px}
+.pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
+.pill.g{background:#F0F8F4;color:var(--ok)}
+.pill.y{background:#FFF7EA;color:var(--warn)}
+.pill.n{background:#F3F1F2;color:var(--off)}
+.pill.b{background:#EEF1F8;color:var(--siw-navy)}
+.how{font-size:11px;color:var(--cb-muted);margin-left:5px}
+
+/* 상세 */
+#drawer{position:fixed;top:0;right:0;width:min(760px,94vw);height:100vh;background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,.14);z-index:80;transform:translateX(100%);transition:transform .22s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
+#drawer.open{transform:translateX(0)}
+.dh{display:flex;align-items:center;gap:12px;padding:16px 22px;border-bottom:1px solid var(--cb-line)}
+.dh h2{font-size:16px;font-weight:800}
+.dh .grow{flex:1}
+.dbody{flex:1;overflow-y:auto;padding:20px 22px 60px}
+.dsec{margin-bottom:24px}
+.dsec h3{font-size:13px;font-weight:800;color:var(--cb-primary);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--cb-line)}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 14px;font-size:13px}
+.kv dt{color:var(--cb-muted);font-weight:500}
+.kv dd{margin:0;word-break:break-word}
+.fld{margin-bottom:12px}
+.fld .lb{font-size:11.5px;font-weight:700;color:var(--cb-muted);margin-bottom:2px}
+.fld .vl{font-size:13px;white-space:pre-wrap;word-break:break-word;background:var(--cb-paper);border-radius:7px;padding:9px 11px}
+.rep{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--cb-line);flex-wrap:wrap}
+.rep:first-of-type{border-top:none}
+#reportBody{font-size:13px;line-height:1.75;background:var(--cb-paper);border-radius:9px;padding:16px;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow-y:auto}
+.backdrop{position:fixed;inset:0;background:rgba(23,18,20,.28);z-index:70;display:none}
+.backdrop.open{display:block}
+.empty{padding:24px;text-align:center;color:var(--cb-muted);font-size:13.5px}
+.note{font-size:12.5px;color:var(--cb-muted);margin-top:8px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hd">
+    <h1>운영자 콘솔</h1>
+    <span class="tag">SIW 2026</span>
+    <div class="grow"></div>
+    <button id="btnReload" onclick="load()" style="display:none">↻ 새로고침</button>
+    <button id="btnOut" onclick="logout()" style="display:none">로그아웃</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div id="gate">
+    <div class="panel">
+      <h2>운영자 로그인</h2>
+      <p>GAS <code>setup()</code> 실행 시 로그에 찍힌 운영자 코드를 입력하십시오.</p>
+      <input type="password" id="fCode" placeholder="운영자 코드" autocomplete="off">
+      <button class="btn p" style="width:100%" id="btnIn" onclick="login()">들어가기</button>
+      <div class="msg" id="m1"></div>
+    </div>
+  </div>
+
+  <div id="main">
+    <div class="stats" id="stats"></div>
+
+    <div class="bar">
+      <input type="text" id="q" placeholder="기업명·대표자·접수번호 검색" oninput="render()">
+      <label style="font-size:13px"><input type="checkbox" id="onlyGap" onchange="render()" style="width:auto;margin:0 4px 0 0"> 손이 필요한 곳만</label>
+      <div class="grow"></div>
+      <span class="note" id="innoState"></span>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>기업</th><th>대표자</th><th>이메일 등록</th><th>접수</th>
+          <th>아이템</th><th>업종(KSIC)</th><th>분석</th><th>IR 자료</th><th></th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div id="unmatched"></div>
+  </div>
+
+</div>
+
+<div class="backdrop" id="backdrop" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div class="dh">
+    <h2 id="dTitle">상세</h2>
+    <div class="grow"></div>
+    <button class="btn sm" onclick="closeDrawer()">닫기 ✕</button>
+  </div>
+  <div class="dbody" id="dBody"></div>
+</div>
+
+<script>
+var API = 'https://script.google.com/macros/s/AKfycbx5JDTOlItoe2dHxmY5ownhgsot-HssH9eFCGYc84GIW__VNaQfzOgq1C4FptdnHCbn/exec';
+var KEY = 'siw2026_admin';
+var DATA = null;
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function tok(){ try{ return sessionStorage.getItem(KEY)||''; }catch(e){ return ''; } }
+function call(b){
+  b.token = b.token || tok();
+  return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(b)}).then(function(r){return r.json();});
+}
+function say(id,t,k){ var m=$(id); m.textContent=t; m.className='msg show '+(k||'err'); }
+
+/* ── 로그인 ── */
+function login(){
+  var code = $('fCode').value.trim();
+  if(!code) return say('m1','운영자 코드를 입력해 주십시오.');
+  $('btnIn').disabled = true; $('btnIn').textContent='확인 중…';
+  call({action:'adminLogin', code:code, token:''}).then(function(j){
+    $('btnIn').disabled=false; $('btnIn').textContent='들어가기';
+    if(!j.ok) return say('m1', j.message||'로그인에 실패했습니다.');
+    try{ sessionStorage.setItem(KEY, j.token); }catch(e){}
+    open_();
+  }).catch(function(){ $('btnIn').disabled=false; $('btnIn').textContent='들어가기'; say('m1','연결에 실패했습니다.'); });
+}
+function open_(){
+  $('gate').style.display='none'; $('main').style.display='block';
+  $('btnOut').style.display=''; $('btnReload').style.display='';
+  load();
+}
+function logout(){ try{ sessionStorage.removeItem(KEY); }catch(e){} location.reload(); }
+
+/* ── 목록 ── */
+function load(){
+  $('rows').innerHTML = '<tr><td colspan="9" class="empty">불러오는 중…</td></tr>';
+  call({action:'adminList'}).then(function(j){
+    if(!j.ok){ if(j.code==='AUTH') return logout(); $('rows').innerHTML='<tr><td colspan="9" class="empty">'+esc(j.message)+'</td></tr>'; return; }
+    DATA = j; render();
+  }).catch(function(){ $('rows').innerHTML='<tr><td colspan="9" class="empty">연결에 실패했습니다.</td></tr>'; });
+}
+
+function render(){
+  if(!DATA) return;
+  var q = $('q').value.trim().toLowerCase();
+  var gapOnly = $('onlyGap').checked;
+  var rows = DATA.rows.filter(function(r){
+    if(q && (r.company+' '+r.ceo+' '+r.recno+' '+r.email).toLowerCase().indexOf(q)<0) return false;
+    if(gapOnly && !(!r.email || !r.recno || !r.folder || r.fileCount===0)) return false;
+    return true;
+  });
+
+  // 요약
+  var all = DATA.rows;
+  $('stats').innerHTML =
+    stat(all.length,'명단 기업') +
+    stat(all.filter(function(r){return r.email;}).length,'가입(이메일 등록)', 'ok') +
+    stat(all.filter(function(r){return r.recno;}).length,'접수 완료','ok') +
+    stat(all.filter(function(r){return r.reportCount>0;}).length,'분석 있음') +
+    stat(all.filter(function(r){return r.fileCount>0;}).length,'IR 자료 전달','ok') +
+    stat(all.filter(function(r){return !r.folder;}).length,'폴더 없음', all.some(function(r){return !r.folder;})?'warn':'');
+
+  $('innoState').innerHTML = DATA.inno
+    ? 'INNO 연동 · 접수 '+DATA.innoTotal+'건 조회'+(DATA.innoError?' <b style="color:#B26B00">('+esc(DATA.innoError)+')</b>':'')
+    : '<b style="color:#B26B00">INNO 미연동</b> — 스크립트 속성 <code>INNO_ADMIN_TOKEN</code> 을 넣으면 신청 내용·분석이 함께 보입니다.';
+
+  if(!rows.length){ $('rows').innerHTML='<tr><td colspan="9" class="empty">해당하는 기업이 없습니다.</td></tr>'; }
+  else $('rows').innerHTML = rows.map(rowHTML).join('');
+
+  // INNO 에만 있고 명단에 없는 접수
+  var un = DATA.unmatched||[];
+  $('unmatched').innerHTML = un.length ? (
+    '<div class="tablewrap" style="margin-top:16px"><div style="padding:13px 14px;font-weight:800;font-size:13px">명단에 없는 INNO 접수 '+un.length+'건 '+
+    '<span class="note">— SIW 참가기업이면 명단에 추가한 뒤 새로고침하십시오</span></div>'+
+    '<table style="min-width:600px"><tbody>'+un.map(function(u){
+      return '<tr><td class="mono">'+esc(u.recno)+'</td><td>'+esc(u.company)+'</td><td>'+esc(u.ceo)+'</td><td>'+esc(u.email)+'</td><td class="mono">'+esc((u.submittedAt||'').slice(0,16).replace('T',' '))+'</td></tr>';
+    }).join('')+'</tbody></table></div>') : '';
+}
+
+function stat(n,label,k){ return '<div class="stat '+(k||'')+'"><b>'+n+'</b><span>'+label+'</span></div>'; }
+
+function rowHTML(r){
+  var mailCell = r.email
+    ? '<span class="pill g">등록</span><div class="mono" style="color:#8B8085">'+esc(r.email)+'</div>'
+    : '<span class="pill n">미가입</span>';
+  var recCell = r.recno
+    ? '<span class="mono">'+esc(r.recno)+'</span>'+(r.matchedBy?'<span class="how">'+esc(r.matchedBy)+'</span>':'')+
+      (r.applyStatus?'<div><span class="pill b">'+esc(r.applyStatus)+'</span></div>':'')
+    : '<span class="pill n">미접수</span>';
+  var repCell = r.reportCount ? '<span class="pill g">'+r.reportCount+'판</span>' : '<span class="pill n">없음</span>';
+  var fileCell = r.fileCount
+    ? '<span class="pill g">'+r.fileCount+'건</span>'
+    : (r.folder ? '<span class="pill y">폴더만</span>' : '<span class="pill n">폴더 없음</span>');
+  return '<tr>'+
+    '<td><b>'+esc(r.company)+'</b></td>'+
+    '<td>'+esc(r.ceo)+'</td>'+
+    '<td>'+mailCell+'</td>'+
+    '<td>'+recCell+'</td>'+
+    '<td class="item">'+esc(r.item||'')+'</td>'+
+    '<td class="item">'+esc(r.ksic||'')+'</td>'+
+    '<td>'+repCell+'</td>'+
+    '<td>'+fileCell+'</td>'+
+    '<td>'+(r.recno?'<button class="btn sm" onclick="detail(\''+esc(r.recno)+'\',\''+esc(r.company)+'\')">상세</button>':'')+
+      ' <button class="btn sm" onclick="resetMail(\''+r.pageId+'\',\''+esc(r.company)+'\')">메일 해제</button></td>'+
+  '</tr>';
+}
+
+/* ── 상세 ── */
+function openDrawer(){ $('drawer').classList.add('open'); $('backdrop').classList.add('open'); }
+function closeDrawer(){ $('drawer').classList.remove('open'); $('backdrop').classList.remove('open'); }
+
+function detail(recno, company){
+  $('dTitle').textContent = company + ' · ' + recno;
+  $('dBody').innerHTML = '<div class="empty">불러오는 중…</div>';
+  openDrawer();
+  call({action:'adminDetail', recno:recno}).then(function(j){
+    if(!j.ok){ $('dBody').innerHTML='<div class="empty">'+esc(j.message)+'</div>'; return; }
+    $('dBody').innerHTML = detailHTML(j);
+  }).catch(function(){ $('dBody').innerHTML='<div class="empty">연결에 실패했습니다.</div>'; });
+}
+
+function detailHTML(j){
+  var h = '<div class="dsec"><h3>기본</h3><dl class="kv">'+
+    kv('대표자', j.ceo) + kv('이메일', j.email) + kv('연락처', j.phone) +
+    kv('사업자번호', j.bizNo) + kv('진행상태', j.status) + kv('신청 Track', j.track) +
+    kv('업종(KSIC)', j.ksic) + kv('창업단계', j.stage) + kv('유료매출', j.hasRevenue===true?'있음':(j.hasRevenue===false?'없음':'')) +
+    kv('접수', (j.submittedAt||'').slice(0,16).replace('T',' ')) +
+    '</dl></div>';
+
+  var d = j.data || {};
+  var keys = Object.keys(d).filter(function(k){ return String(d[k]||'').trim() !== '' && typeof d[k] !== 'object'; });
+  h += '<div class="dsec"><h3>신청 내용 '+(keys.length?'':'(비어 있음)')+'</h3>';
+  keys.forEach(function(k){ h += '<div class="fld"><div class="lb">'+esc(k)+'</div><div class="vl">'+esc(d[k])+'</div></div>'; });
+  h += '</div>';
+
+  var ue = j.unitEconomics || {};
+  var uk = Object.keys(ue);
+  if(uk.length){
+    h += '<div class="dsec"><h3>단위경제성</h3><dl class="kv">';
+    uk.forEach(function(k){ h += kv(k, ue[k]); });
+    h += '</dl></div>';
+  }
+
+  if((j.attachments||[]).length){
+    h += '<div class="dsec"><h3>첨부</h3>'+j.attachments.map(function(a){
+      return '<div class="rep"><span>'+esc(a.name||'')+'</span><span class="note">'+esc(a.kind||'')+'</span></div>';
+    }).join('')+'</div>';
+  }
+
+  h += '<div class="dsec"><h3>STEP 0~6 분석 <span class="note">— 운영자 전용. 기업 화면에는 노출되지 않습니다</span></h3>';
+  if(!(j.reports||[]).length) h += '<div class="empty">아직 분석 판본이 없습니다.</div>';
+  else h += j.reports.map(function(r){
+    return '<div class="rep"><b>v'+esc(r.version||'')+'</b>'+
+      '<span class="pill '+(r.status==='published'?'g':'y')+'">'+esc(r.status||'')+'</span>'+
+      '<span class="note">'+esc((r.created_at||'').slice(0,16).replace('T',' '))+'</span>'+
+      '<button class="btn sm" onclick="report('+r.id+',\'internal\')">내부</button>'+
+      '<button class="btn sm" onclick="report('+r.id+',\'mentor\')">멘토</button>'+
+      '<button class="btn sm" onclick="report('+r.id+',\'participant\')">기업용</button>'+
+      '</div>';
+  }).join('');
+  h += '<div id="reportBox"></div></div>';
+  return h;
+}
+
+function kv(k,v){ return v||v===0 ? '<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>' : ''; }
+
+function report(rid, view){
+  var box = $('reportBox');
+  box.innerHTML = '<div class="empty">보고서를 불러오는 중…</div>';
+  call({action:'adminReport', rid:rid, view:view}).then(function(j){
+    if(!j.ok){ box.innerHTML='<div class="empty">'+esc(j.message)+'</div>'; return; }
+    box.innerHTML = '<div style="margin-top:12px"><div class="bar"><b>'+esc(view)+' 뷰</b>'+
+      '<div class="grow"></div><button class="btn sm" onclick="printReport()">🖨 인쇄 · PDF 저장</button></div>'+
+      '<div id="reportBody">'+esc(j.body)+'</div></div>';
+  }).catch(function(){ box.innerHTML='<div class="empty">연결에 실패했습니다.</div>'; });
+}
+
+/* 분석 PDF — 운영자가 상담 데스크에서 쓸 종이 */
+function printReport(){
+  var b = $('reportBody'); if(!b) return;
+  var w = window.open('', '_blank');
+  w.document.write('<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>'+
+    document.getElementById('dTitle').textContent+'</title><style>'+
+    'body{font-family:"Noto Sans KR",sans-serif;font-size:11pt;line-height:1.7;white-space:pre-wrap;padding:18mm 16mm;color:#171214}'+
+    'h1{font-size:15pt;border-bottom:2px solid #A8134A;padding-bottom:8px;margin-bottom:16px}'+
+    '@page{size:A4;margin:0}</style></head><body><h1>'+
+    esc(document.getElementById('dTitle').textContent)+'</h1>'+b.innerHTML+'</body></html>');
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 350);
+}
+
+function resetMail(pageId, company){
+  if(!confirm(company+' 의 등록 이메일을 해제하시겠습니까?\n\n해제하면 그 기업이 다시 처음부터 가입할 수 있습니다.')) return;
+  call({action:'adminResetEmail', pageId:pageId}).then(function(j){
+    if(!j.ok) return alert(j.message||'해제하지 못했습니다.');
+    load();
+  });
+}
+
+/* 새로고침해도 세션이 살아 있으면 복원 */
+if(tok()) open_();
+$('fCode').addEventListener('keydown', function(e){ if(e.key==='Enter') login(); });
+</script>
+</body>
+</html>
