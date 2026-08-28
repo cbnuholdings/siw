@@ -20,6 +20,8 @@
   --cb-body:#5B5155; --cb-muted:#8B8085; --cb-paper:#FBF6F7;
   --cb-line:rgba(23,18,20,.08); --cb-line-brand:rgba(168,19,74,.16);
   --cb-ok:#0F7B4F; --cb-warn:#B26B00;
+  /* SIW 로고 안에 들어 있는 색 — 로고를 변형하지 않고 배경으로 쓴다 */
+  --siw-navy:#30365B; --siw-navy-2:#252A47;
   --cb-max:1120px; --cb-ease:cubic-bezier(.2,.8,.2,1);
 }
 *{box-sizing:border-box}
@@ -33,13 +35,16 @@ a{color:inherit}
 h1,h2,h3{line-height:1.35;margin:0}
 .eyebrow{font-family:Archivo,sans-serif;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cb-primary);font-weight:700}
 
-/* ── 헤더 ── */
-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--cb-line)}
-.hd{display:flex;align-items:center;gap:14px;height:68px}
-.hd img{height:32px;width:auto}
-.hd .nm{font-weight:700;font-size:15px;letter-spacing:-.01em}
-.hd .nm small{display:block;font-weight:500;font-size:11.5px;color:var(--cb-muted);letter-spacing:.02em}
+/* ── 헤더 — SIW 로고가 흰색 전용이라 배경을 로고 안의 남색으로 잡는다 ── */
+header{position:sticky;top:0;z-index:50;background:var(--siw-navy);border-bottom:1px solid rgba(255,255,255,.1)}
+.hd{display:flex;align-items:center;gap:16px;height:74px}
+.hd img.siw{height:44px;width:auto;display:block}
+.hd .bar{width:1px;height:26px;background:rgba(255,255,255,.24)}
+.hd .nm{font-weight:700;font-size:14.5px;letter-spacing:-.01em;color:#fff}
+.hd .nm small{display:block;font-weight:400;font-size:11.5px;color:rgba(255,255,255,.62);letter-spacing:.02em}
 .hd .grow{flex:1}
+.hd .btn-t{color:rgba(255,255,255,.9)}
+.hd .btn-t:hover{color:#fff;background:rgba(255,255,255,.1);border-radius:8px}
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:6px;
   padding:11px 20px;border-radius:8px;border:1px solid transparent;
@@ -68,6 +73,24 @@ header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdro
 .notice p{margin:0 0 8px;font-size:15px;color:var(--cb-body)}
 .notice .strong{color:var(--cb-ink);font-weight:700}
 .deadline{display:inline-block;margin-top:6px;padding:7px 14px;border-radius:8px;background:var(--cb-paper);font-size:14px;font-weight:700;color:var(--cb-deep)}
+
+/* ── 개인정보 동의 안내 ── */
+.privacy{margin:20px 0 0;padding:26px 28px;border-radius:14px;background:#fff;border:1px solid var(--cb-line)}
+.privacy h3{font-size:15.5px;font-weight:800;margin-bottom:14px;color:var(--siw-navy)}
+.ptab{width:100%;border-collapse:collapse;font-size:14px}
+.ptab th,.ptab td{text-align:left;vertical-align:top;padding:10px 0;border-top:1px solid var(--cb-line)}
+.ptab tr:first-child th,.ptab tr:first-child td{border-top:none}
+.ptab th{width:130px;font-weight:700;color:var(--cb-ink);padding-right:16px;white-space:nowrap}
+.ptab td{color:var(--cb-body)}
+.ptab .sm{display:inline-block;margin-top:3px;font-size:12.5px;color:var(--cb-muted)}
+.pnote{margin:14px 0 0;padding-top:14px;border-top:1px solid var(--cb-line);font-size:13.5px;color:var(--cb-body)}
+.pnote a{color:var(--cb-primary);font-weight:700}
+.consent{display:flex;gap:10px;align-items:flex-start;margin:4px 0 16px;padding:14px;border-radius:10px;background:var(--cb-paper);border:1px solid var(--cb-line)}
+.consent input{margin:2px 0 0;width:17px;height:17px;flex:none;accent-color:var(--cb-primary)}
+.consent label{font-size:13.5px;font-weight:500;line-height:1.6;margin:0;cursor:pointer}
+.consent b{font-weight:700}
+.consent a{color:var(--cb-primary);font-weight:700}
+@media (max-width:560px){ .ptab th{width:auto;display:block;padding-bottom:2px;border-top:none} .ptab td{display:block;padding-top:0} .ptab tr{display:block;border-top:1px solid var(--cb-line);padding:10px 0} .ptab tr:first-child{border-top:none} }
 
 /* ── 섹션 ── */
 section{padding:64px 0}
@@ -136,8 +159,9 @@ footer a:hover{color:var(--cb-primary)}
 
 <header>
   <div class="wrap hd">
-    <img src="assets/logo.png" alt="충북대학교기술지주" onerror="this.style.display='none'">
-    <div class="nm">SIW 2026 투자상담회<small>충북대학교기술지주(주)</small></div>
+    <img class="siw" src="assets/siw_logo.svg" alt="Startup Korea Investment Week 2026" onerror="this.style.display='none'">
+    <div class="bar"></div>
+    <div class="nm">투자상담회<small>충북대학교기술지주(주)</small></div>
     <div class="grow"></div>
     <button class="btn btn-t" id="navLogin" onclick="showGate()">참여기업 로그인</button>
     <button class="btn btn-t" id="navOut" style="display:none" onclick="logout()">로그아웃</button>
@@ -153,7 +177,6 @@ footer a:hover{color:var(--cb-primary)}
     <div class="meta">
       <span class="chip">📅 <b>2026. 9. 1(화) ~ 9. 3(목)</b></span>
       <span class="chip">📍 대전스타트업파크 일대</span>
-      <span class="chip">🤝 <b>20개사</b> 투자상담</span>
     </div>
 
     <div class="notice">
@@ -162,6 +185,21 @@ footer a:hover{color:var(--cb-primary)}
          비워 두신 칸은 상담 자리에서 <span class="strong">투자자가 물을 질문</span>이 됩니다.</p>
       <p>작성해 주신 자료를 바탕으로 담당자가 피칭 덱과 IR 원고 초안을 준비합니다.</p>
       <div class="deadline">작성 기간 · 8월 31일(월) 00:00 ~ 9월 1일(화) 오전 11:00</div>
+    </div>
+
+    <!-- 개인정보 수집·이용 안내 -->
+    <div class="privacy">
+      <h3>개인정보 수집·이용 안내</h3>
+      <table class="ptab">
+        <tr><th>수집 항목</th><td>기업명 · 대표자명 · 이메일 주소<br>
+          <span class="sm">사업 정보(사업 아이템·고객·시장 등)는 접수 시스템에서 별도 안내 후 수집합니다.</span></td></tr>
+        <tr><th>수집 목적</th><td>SIW 2026 투자상담회 참여기업 확인, 인증번호 발송, 투자자 대상 설명(IR) 자료 제작 및 전달</td></tr>
+        <tr><th>보유·이용 기간</th><td>수집일로부터 <b>1년</b>. 기간이 지나면 지체 없이 파기합니다.<br>
+          <span class="sm">파기 전이라도 요청하시면 즉시 삭제해 드립니다.</span></td></tr>
+        <tr><th>제3자 제공</th><td>제공하지 않습니다. 다만 상담 당일 <b>배정된 투자자에게 귀사의 IR 자료가 전달</b>됩니다.</td></tr>
+      </table>
+      <p class="pnote">동의를 거부하실 수 있습니다. 다만 <b>참여기업 확인이 불가능하여 본 페이지 이용과 상담 자료 제작이 제한</b>됩니다.
+        문의 · <a href="mailto:junmin@cbnuholdings.onmicrosoft.com">운영 담당자</a></p>
     </div>
   </div>
 </div>
@@ -173,14 +211,25 @@ footer a:hover{color:var(--cb-primary)}
     <div id="gate">
       <div class="panel" id="stepEmail">
         <h2>참여기업 로그인</h2>
-        <p class="sub">사전 등록하신 기업명과 이메일을 입력하시면, 해당 메일로 인증번호를 보내드립니다.</p>
+        <p class="sub">참여기업 명단의 <b>기업명과 대표자명</b>으로 확인한 뒤, 적어 주신 이메일로 인증번호를 보내드립니다.
+           <b>처음 로그인하실 때 적으신 이메일이 귀사의 로그인 주소가 됩니다.</b></p>
         <label for="fCompany">기업명</label>
         <input type="text" id="fCompany" placeholder="예: 주식회사 ○○○" autocomplete="organization">
+        <label for="fCeo">대표자명</label>
+        <input type="text" id="fCeo" placeholder="예: 홍길동" autocomplete="name">
         <label for="fEmail">이메일</label>
         <input type="email" id="fEmail" placeholder="예: name@company.com" autocomplete="email">
+
+        <div class="consent">
+          <input type="checkbox" id="fConsent">
+          <label for="fConsent"><b>[필수]</b> 개인정보 수집·이용에 동의합니다.
+            기업명·대표자명·이메일을 참여기업 확인과 IR 자료 제작·전달에 <b>1년간</b> 이용하는 데 동의합니다.
+            <a href="#privacy" onclick="document.querySelector('.privacy').scrollIntoView({behavior:'smooth'});return false;">안내 전문 보기</a></label>
+        </div>
+
         <button class="btn btn-p" style="width:100%" id="btnSend" onclick="requestOtp()">인증번호 받기</button>
         <div class="msg" id="m1"></div>
-        <p class="hint">등록되지 않은 기업이시면 운영 담당자에게 연락해 주십시오.</p>
+        <p class="hint">명단에 없거나 대표자명이 바뀌었다면 운영 담당자에게 연락해 주십시오.</p>
       </div>
 
       <div class="panel" id="stepOtp" style="display:none">
@@ -287,7 +336,7 @@ footer a:hover{color:var(--cb-primary)}
    ══════════════════════════════════════════════════════════════ */
 var API = 'https://script.google.com/macros/s/AKfycbx5JDTOlItoe2dHxmY5ownhgsot-HssH9eFCGYc84GIW__VNaQfzOgq1C4FptdnHCbn/exec';
 var TOKEN_KEY = 'siw2026_token';
-var pendingEmail = '', pendingCompany = '';
+var pendingEmail = '', pendingCompany = '', pendingCeo = '', pendingConsent = false;
 
 function $(id){ return document.getElementById(id); }
 function say(el, text, kind){
@@ -315,19 +364,23 @@ function maskEmail(e){
 /* ── 1단계: 인증번호 요청 ── */
 function requestOtp(){
   var company = $('fCompany').value.trim();
+  var ceo = $('fCeo').value.trim();
   var email = $('fEmail').value.trim();
+  var consent = $('fConsent').checked;
   clear('m1');
   if (!company) return say('m1', '기업명을 입력해 주십시오.');
+  if (!ceo) return say('m1', '대표자명을 입력해 주십시오.');
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return say('m1', '이메일 형식을 확인해 주십시오.');
+  if (!consent) return say('m1', '개인정보 수집·이용에 동의하셔야 이용하실 수 있습니다.');
 
   $('btnSend').disabled = true;
   $('btnSend').textContent = '보내는 중…';
-  call({ action: 'requestOtp', company: company, email: email })
+  call({ action: 'requestOtp', company: company, ceo: ceo, email: email })
     .then(function(j){
       $('btnSend').disabled = false;
       $('btnSend').textContent = '인증번호 받기';
-      if (!j.ok) return say('m1', j.message || '등록된 참여기업 정보를 찾지 못했습니다. 운영 담당자에게 문의해 주십시오.');
-      pendingCompany = company; pendingEmail = email;
+      if (!j.ok) return say('m1', j.message || '참여기업 명단에서 찾지 못했습니다. 운영 담당자에게 문의해 주십시오.');
+      pendingCompany = company; pendingCeo = ceo; pendingEmail = email; pendingConsent = consent;
       $('maskMail').textContent = maskEmail(email);
       $('stepEmail').style.display = 'none';
       $('stepOtp').style.display = '';
@@ -354,7 +407,7 @@ function verifyOtp(){
 
   $('btnVerify').disabled = true;
   $('btnVerify').textContent = '확인 중…';
-  call({ action: 'verifyOtp', company: pendingCompany, email: pendingEmail, code: code })
+  call({ action: 'verifyOtp', company: pendingCompany, ceo: pendingCeo, email: pendingEmail, code: code, consent: pendingConsent })
     .then(function(j){
       $('btnVerify').disabled = false;
       $('btnVerify').textContent = '확인';
