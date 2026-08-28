@@ -220,8 +220,10 @@ function render(){
     stat(all.filter(function(r){return r.fileCount>0;}).length,'IR 자료 전달','ok') +
     stat(all.filter(function(r){return !r.folder;}).length,'폴더 없음', all.some(function(r){return !r.folder;})?'warn':'');
 
+  var w = DATA.window || {};
   $('innoState').innerHTML = DATA.inno
-    ? 'INNO 연동 · 접수 '+DATA.innoTotal+'건 조회'+(DATA.innoError?' <b style="color:#B26B00">('+esc(DATA.innoError)+')</b>':'')
+    ? 'INNO 연동 · 전체 접수 '+DATA.innoTotal+'건 중 <b>SIW 구간 '+esc(w.from||'')+' ~ '+esc(w.to||'')+'</b> 만 자동 매칭'+
+      (DATA.innoError?' <b style="color:#B26B00">('+esc(DATA.innoError)+')</b>':'')
     : '<b style="color:#B26B00">INNO 미연동</b> — 스크립트 속성 <code>INNO_ADMIN_TOKEN</code> 을 넣으면 신청 내용·분석이 함께 보입니다.';
 
   if(!rows.length){ $('rows').innerHTML='<tr><td colspan="9" class="empty">해당하는 기업이 없습니다.</td></tr>'; }
@@ -230,8 +232,8 @@ function render(){
   // INNO 에만 있고 명단에 없는 접수
   var un = DATA.unmatched||[];
   $('unmatched').innerHTML = un.length ? (
-    '<div class="tablewrap" style="margin-top:16px"><div style="padding:13px 14px;font-weight:800;font-size:13px">명단에 없는 INNO 접수 '+un.length+'건 '+
-    '<span class="note">— SIW 참가기업이면 명단에 추가한 뒤 새로고침하십시오</span></div>'+
+    '<div class="tablewrap" style="margin-top:16px"><div style="padding:13px 14px;font-weight:800;font-size:13px">SIW 구간에 접수됐으나 명단에 없는 건 '+un.length+'건 '+
+    '<span class="note">— 참가기업이면 명단에 추가한 뒤 새로고침하십시오</span></div>'+
     '<table style="min-width:600px"><tbody>'+un.map(function(u){
       return '<tr><td class="mono">'+esc(u.recno)+'</td><td>'+esc(u.company)+'</td><td>'+esc(u.ceo)+'</td><td>'+esc(u.email)+'</td><td class="mono">'+esc((u.submittedAt||'').slice(0,16).replace('T',' '))+'</td></tr>';
     }).join('')+'</tbody></table></div>') : '';

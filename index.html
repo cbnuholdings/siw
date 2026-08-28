@@ -45,6 +45,10 @@ header{position:sticky;top:0;z-index:50;background:var(--siw-navy);border-bottom
 .hd .grow{flex:1}
 .hd .btn-t{color:rgba(255,255,255,.9)}
 .hd .btn-t:hover{color:#fff;background:rgba(255,255,255,.1);border-radius:8px}
+.hd .navbar{width:1px;height:18px;background:rgba(255,255,255,.24);margin:0 2px}
+.hd .adm{text-decoration:none;color:rgba(255,255,255,.62);font-size:13px}
+.hd .adm:hover{color:#fff}
+@media (max-width:640px){ .hd .navbar{display:none} .hd .adm{font-size:12px;padding:11px 4px} }
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:6px;
   padding:11px 20px;border-radius:8px;border:1px solid transparent;
@@ -165,6 +169,8 @@ footer a:hover{color:var(--cb-primary)}
     <div class="grow"></div>
     <button class="btn btn-t" id="navLogin" onclick="showGate()">참여기업 로그인</button>
     <button class="btn btn-t" id="navOut" style="display:none" onclick="logout()">로그아웃</button>
+    <span class="navbar"></span>
+    <a class="btn btn-t adm" href="admin.html">관리자 로그인</a>
   </div>
 </header>
 
