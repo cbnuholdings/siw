@@ -14,6 +14,7 @@
   --cb-primary:#A8134A; --cb-deep:#6E0B2E; --cb-ink:#171214; --cb-body:#5B5155;
   --cb-muted:#8B8085; --cb-paper:#FBF6F7; --cb-line:rgba(23,18,20,.09);
   --siw-navy:#30365B; --ok:#0F7B4F; --warn:#B26B00; --off:#9A8E93;
+  --cb-ok:#0F7B4F; --cb-line-brand:rgba(168,19,74,.18);
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -94,7 +95,63 @@ td.item{white-space:normal;max-width:280px;color:var(--cb-body);font-size:12.5px
 .fld .vl{font-size:13px;white-space:pre-wrap;word-break:break-word;background:var(--cb-paper);border-radius:7px;padding:9px 11px}
 .rep{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--cb-line);flex-wrap:wrap}
 .rep:first-of-type{border-top:none}
-#reportBody{font-size:13px;line-height:1.75;background:var(--cb-paper);border-radius:9px;padding:16px;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow-y:auto}
+#reportBody{font-size:13px;line-height:1.75;background:var(--cb-paper);border-radius:9px;padding:16px;word-break:break-word;max-height:60vh;overflow:auto}
+#reportBody .rt{table-layout:fixed}
+#reportBody h2{font-size:15px;font-weight:800;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--cb-primary)}
+#reportBody h2:first-child{margin-top:0}
+#reportBody h3{font-size:13.5px;font-weight:800;margin:16px 0 7px;color:var(--cb-deep)}
+#reportBody h4{font-size:12.5px;font-weight:800;margin:12px 0 5px;color:var(--cb-body)}
+#reportBody p{margin:0 0 9px}
+#reportBody ul{margin:0 0 10px;padding-left:18px}
+#reportBody li{margin-bottom:3px}
+#reportBody hr{border:none;border-top:1px solid var(--cb-line);margin:14px 0}
+#reportBody .pdf-pb{display:none}
+
+/* 보고서 표 */
+.rt{width:100%;min-width:0;border-collapse:collapse;font-size:11.5px;margin:0 0 12px;background:#fff}
+/* 🔴 min-width:0 이 없으면 위의 전역 `table{min-width:1100px}`(목록 표용)을 물려받아
+   PDF 캡처(794px)에서 오른쪽 열이 통째로 잘린다(2026-09-01 실측). */
+.rt th,.rt td{border:1px solid var(--cb-line);padding:6px 8px;text-align:left;vertical-align:top;
+              word-break:break-word;white-space:normal}
+/* 🔴 white-space:normal 을 명시해야 한다 — 위의 전역 `th,td{white-space:nowrap}`(목록 표용)이
+   보고서 셀에도 걸려 줄바꿈을 막고, 긴 문장이 셀 밖으로 흘러 PDF 에서 잘린다(2026-09-01 실측). */
+.rt th{background:var(--cb-paper);font-weight:700}
+
+/* 증거 태그 — 기업이 말한 것과 분석이 추정한 것을 색으로 가른다 */
+.tg{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;
+    letter-spacing:-.01em;white-space:nowrap;vertical-align:1px}
+.tg.t-co{background:#F0F8F4;color:var(--cb-ok);border:1px solid rgba(15,123,79,.24)}      /* 기업입력 */
+.tg.t-ex{background:#EEF3FB;color:#2E5AA8;border:1px solid rgba(46,90,168,.24)}           /* 외부확인 */
+.tg.t-hy{background:#FDF2F5;color:var(--cb-primary);border:1px solid var(--cb-line-brand)}/* 분석가설 */
+.tg.t-ms{background:#F4F2F3;color:var(--cb-muted);border:1px solid var(--cb-line)}        /* 자료 없음 */
+.tg.t-rk{background:#FFF7ED;color:#8A5200;border:1px solid rgba(178,107,0,.26)}           /* 핵심 리스크 */
+
+/* PDF 캡처 영역 — A4 폭 794px 고정(96dpi). 화면 스타일과 분리해 둔다 */
+#pdfHost{width:794px}
+.pdfarea{position:static;width:794px;padding:30px 42px;background:#fff;color:#171214;
+         font-family:'Noto Sans KR',sans-serif;font-size:12.5px;line-height:1.75}
+.pdfarea h2{font-size:16px;font-weight:800;margin:0 0 12px;padding-bottom:7px;border-bottom:2px solid var(--cb-primary)}
+.pdfarea h3{font-size:14px;font-weight:800;margin:16px 0 7px;color:var(--cb-deep)}
+.pdfarea h4{font-size:12.5px;font-weight:800;margin:12px 0 5px;color:var(--cb-body)}
+.pdfarea p{margin:0 0 9px}
+.pdfarea .rt{table-layout:fixed;max-width:100%}
+/* 🔴 auto 레이아웃은 긴 한글 셀의 콘텐츠 폭을 존중해 표를 2200px 까지 늘린다 —
+   width:100% 도 min-width:0 도 그걸 막지 못한다. fixed 만이 A4 폭 안에 가둔다(실측). */
+.pdfarea .rt th{white-space:normal}   /* 🔴 nowrap 이면 표가 A4 폭을 넘어 오른쪽이 잘린다(실측) */
+.pdfarea .rt th,.pdfarea .rt td{font-size:11px;padding:5px 7px}
+.pdfarea ul{margin:0 0 10px;padding-left:20px}
+.pdfarea hr{border:none;border-top:1px solid var(--cb-line);margin:14px 0}
+.pdfcover{padding:40px 0 0}
+.pdfcover .pc-eyebrow{font-size:11px;font-weight:800;letter-spacing:.16em;color:var(--cb-primary);text-transform:uppercase}
+.pdfcover h1{font-size:30px;font-weight:900;letter-spacing:-.03em;margin:12px 0 6px}
+.pdfcover .pc-name{font-size:19px;font-weight:800;color:var(--cb-deep);margin-bottom:26px}
+.pdfcover .pc-meta{margin-bottom:22px}
+.pdfcover .pc-meta th{width:110px}
+.pdfcover .pc-legend{font-size:11px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;
+                     padding:12px 14px;background:var(--cb-paper);border-radius:9px}
+.pdfcover .pc-legend b{margin-right:4px;color:var(--cb-body)}
+.pdfcover .pc-warn{margin-top:18px;font-size:11.5px;color:var(--cb-deep);
+                   background:#FDF2F5;border:1px solid var(--cb-line-brand);border-radius:9px;padding:11px 13px}
 .backdrop{position:fixed;inset:0;background:rgba(23,18,20,.28);z-index:70;display:none}
 .backdrop.open{display:block}
 .empty{padding:24px;text-align:center;color:var(--cb-muted);font-size:13.5px}
@@ -429,15 +486,211 @@ function analyze(recno, force){
   }).catch(function(){ box.innerHTML='<div class="empty">연결에 실패했습니다.</div>'; });
 }
 
+var REPORT = null;   // 마지막으로 연 보고서 — PDF 생성이 다시 씀
+
 function report(rid, view){
   var box = $('reportBox');
   box.innerHTML = '<div class="empty">보고서를 불러오는 중…</div>';
   call({action:'adminReport', rid:rid, view:view}).then(function(j){
     if(!j.ok){ box.innerHTML='<div class="empty">'+esc(j.message)+'</div>'; return; }
+    REPORT = j; REPORT.rid = rid; REPORT.viewName = view;
     box.innerHTML = '<div style="margin-top:12px"><div class="bar"><b>'+esc(view)+' 뷰</b>'+
-      '<div class="grow"></div><button class="btn sm" onclick="printReport()">🖨 인쇄 · PDF 저장</button></div>'+
-      '<div id="reportBody">'+esc(j.body)+'</div></div>';
+      '<div class="grow"></div>'+
+      '<button class="btn sm" onclick="downloadPdf()">⬇ PDF 내려받기</button>'+
+      '<button class="btn sm" onclick="printReport()">🖨 인쇄</button></div>'+
+      '<div id="reportBody">'+mdToHtml(j.body||'')+'</div>'+
+      '<div id="pdfMsg" class="note"></div></div>';
   }).catch(function(){ box.innerHTML='<div class="empty">연결에 실패했습니다.</div>'; });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   마크다운 → HTML  (보고서 본문은 헤더·표·목록·강조만 쓴다)
+   증거 태그는 색 배지로 바꾼다 — 기업이 말한 것과 분석이 추정한 것을 눈으로 가른다.
+   ══════════════════════════════════════════════════════════════ */
+var TAGCLS = {
+  '기업입력':'t-co', '외부확인':'t-ex', '분석가설':'t-hy',
+  'MISSING':'t-ms', 'MISSING/외부확인 불가':'t-ms', '벤치마크 보완':'t-ms', '핵심 리스크':'t-rk'
+};
+
+function inlineMd(s){
+  var t = esc(s);
+  t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/\[([^\]]{2,24})\]/g, function(m, name){
+    var c = TAGCLS[name];
+    return c ? '<span class="tg '+c+'">'+name+'</span>' : m;
+  });
+  return t;
+}
+
+function mdToHtml(md){
+  var lines = String(md||'').replace(/\r/g,'').split('\n');
+  var out = [], i = 0, para = [];
+
+  function flushPara(){
+    if(para.length){ out.push('<p>'+para.join('<br>')+'</p>'); para = []; }
+  }
+
+  while(i < lines.length){
+    var ln = lines[i];
+
+    // 표 — 헤더행 + 구분행 + 본문행
+    if(/^\s*\|/.test(ln) && i+1 < lines.length && /^\s*\|[\s\-:|]+\|\s*$/.test(lines[i+1])){
+      flushPara();
+      var cells = function(row){
+        return row.replace(/^\s*\|/,'').replace(/\|\s*$/,'').split('|').map(function(c){ return inlineMd(c.trim()); });
+      };
+      var head = cells(ln); i += 2;
+      var body = [];
+      while(i < lines.length && /^\s*\|/.test(lines[i])){ body.push(cells(lines[i])); i++; }
+      out.push('<table class="rt"><thead><tr>'+head.map(function(c){return '<th>'+c+'</th>';}).join('')+
+        '</tr></thead><tbody>'+body.map(function(r){
+          return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';
+        }).join('')+'</tbody></table>');
+      continue;
+    }
+
+    var m;
+    if((m = ln.match(/^####\s+(.*)$/))){ flushPara(); out.push('<h4>'+inlineMd(m[1])+'</h4>'); i++; continue; }
+    if((m = ln.match(/^###\s+(.*)$/))){  flushPara(); out.push('<h3>'+inlineMd(m[1])+'</h3>'); i++; continue; }
+    if((m = ln.match(/^##\s+(.*)$/))){
+      flushPara();
+      out.push('<div class="pdf-pb"></div><h2>'+inlineMd(m[1])+'</h2>');   // STEP 마다 페이지를 가른다
+      i++; continue;
+    }
+    if((m = ln.match(/^#\s+(.*)$/))){ flushPara(); out.push('<h2>'+inlineMd(m[1])+'</h2>'); i++; continue; }
+    if(/^\s*[-*]\s+/.test(ln)){
+      flushPara();
+      var items = [];
+      while(i < lines.length && /^\s*[-*]\s+/.test(lines[i])){
+        items.push('<li>'+inlineMd(lines[i].replace(/^\s*[-*]\s+/,''))+'</li>'); i++;
+      }
+      out.push('<ul>'+items.join('')+'</ul>');
+      continue;
+    }
+    if(/^\s*$/.test(ln)){ flushPara(); i++; continue; }
+    if(/^\s*---+\s*$/.test(ln)){ flushPara(); out.push('<hr>'); i++; continue; }
+    para.push(inlineMd(ln));
+    i++;
+  }
+  flushPara();
+  return out.join('\n');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PDF — html2canvas + jsPDF 를 직접 제어한다 (설계정본 결정 #31)
+   🔴 html2pdf 번들은 쓰지 않는다. page-break 마커가 무시돼 섹션이 페이지 중간에서 잘린다.
+   ══════════════════════════════════════════════════════════════ */
+var PDFLIB = { canvas:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+               jspdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' };
+
+function loadScript(src){
+  return new Promise(function(res, rej){
+    var s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = function(){ rej(new Error(src)); };
+    document.head.appendChild(s);
+  });
+}
+
+function ensurePdfLibs(){
+  var chain = Promise.resolve();
+  if(typeof window.html2canvas === 'undefined') chain = chain.then(function(){ return loadScript(PDFLIB.canvas); });
+  if(typeof window.jspdf === 'undefined')       chain = chain.then(function(){ return loadScript(PDFLIB.jspdf); });
+  return chain;
+}
+
+function kstDate(){
+  var d = new Date(Date.now() + 9*3600*1000);   // 서버·브라우저 시간대와 무관하게 한국 날짜로 찍는다
+  return d.toISOString().slice(0,10);
+}
+
+function coverHtml(j){
+  var c = j.cover || {}, co = j.company || {}, r = j.report || {};
+  var ks = c.ksic || {};
+  var title = $('dTitle').textContent || '';
+  return '<div class="pdfcover">'+
+    '<div class="pc-eyebrow">SIW 2026 투자상담회 · 상담 데스크용</div>'+
+    '<h1>아이템 분석 보고서</h1>'+
+    '<div class="pc-name">'+esc(co.company_name || title)+'</div>'+
+    '<table class="rt pc-meta"><tbody>'+
+      '<tr><th>접수번호</th><td>'+esc(r.recno || co.recno || '')+'</td></tr>'+
+      '<tr><th>사업 아이템</th><td>'+esc(c.item || '')+'</td></tr>'+
+      '<tr><th>업종(KSIC)</th><td>'+esc([ks.code, ks.name].filter(Boolean).join(' ')+(ks.basis?(' · '+ks.basis):''))+'</td></tr>'+
+      '<tr><th>창업 상태</th><td>'+esc(c.stage || '')+'</td></tr>'+
+      '<tr><th>판본</th><td>v'+esc(r.version||'')+' · '+esc(j.viewName||'')+' 뷰 · '+esc((r.created_at||'').slice(0,16).replace('T',' '))+'</td></tr>'+
+      '<tr><th>출력일</th><td>'+kstDate()+'</td></tr>'+
+    '</tbody></table>'+
+    '<div class="pc-legend"><b>증거 표기</b>'+
+      '<span class="tg t-co">기업입력</span><span class="tg t-ex">외부확인</span>'+
+      '<span class="tg t-hy">분석가설</span><span class="tg t-ms">MISSING</span>'+
+      '<span class="tg t-rk">핵심 리스크</span></div>'+
+    '<p class="pc-warn">본 보고서는 <b>운영자 전용</b>입니다. 기업에게 전달하지 않습니다.</p>'+
+  '</div>';
+}
+
+function downloadPdf(){
+  if(!REPORT){ return; }
+  var msg = $('pdfMsg');
+  msg.textContent = 'PDF를 만드는 중입니다… 잠시만 기다려 주십시오.';
+  ensurePdfLibs().then(function(){
+    return renderPdf(REPORT);
+  }).then(function(name){
+    msg.textContent = '내려받았습니다 — ' + name;
+  }).catch(function(e){
+    msg.textContent = 'PDF를 만들지 못했습니다: ' + (e && e.message ? e.message : e);
+  });
+}
+
+function renderPdf(j, mode){          // mode: save(기본) · blob · datauristring — 뒤에 제출 연동에도 쓴다
+  // 화면 밖 고정 host + 정상 흐름 자식에서 캡처한다(오프스크린 높이 0 측정 회피)
+  var host = $('pdfHost');
+  if(!host){
+    host = document.createElement('div'); host.id = 'pdfHost';
+    document.body.appendChild(host);
+  }
+  host.style.cssText = 'position:fixed;left:0;top:0;z-index:-1;opacity:0;pointer-events:none;width:794px;background:#fff;overflow:hidden';
+  host.innerHTML = '<div id="pdfArea"></div>';
+  var area = $('pdfArea');
+  area.className = 'pdfarea';
+
+  var parts = (coverHtml(j) + '\n' + mdToHtml(j.body||'')).split('<div class="pdf-pb"></div>')
+                .filter(function(s){ return s.replace(/\s|<[^>]*>/g,'').length; });
+
+  var jsPDF = window.jspdf.jsPDF;
+  var pdf = new jsPDF({unit:'mm', format:'a4', orientation:'portrait'});
+  var PW=210, PH=297, M=10, availW=PW-2*M, availH=PH-2*M;
+
+  var chain = Promise.resolve();
+  parts.forEach(function(html, idx){
+    chain = chain.then(function(){
+      area.innerHTML = html;
+      return window.html2canvas(area, {scale:2, useCORS:true, backgroundColor:'#ffffff',
+        width:794, windowWidth:794, scrollX:0, scrollY:0});
+    }).then(function(canvas){
+      var img = canvas.toDataURL('image/jpeg', 0.95);
+      var imgH = canvas.height * availW / canvas.width;
+      if(idx > 0) pdf.addPage();
+      if(imgH <= availH){ pdf.addImage(img, 'JPEG', M, M, availW, imgH); }
+      else {
+        var left = imgH, first = true;
+        while(left > 0){
+          if(!first) pdf.addPage();
+          pdf.addImage(img, 'JPEG', M, M-(imgH-left), availW, imgH);   // 페이지 경계가 자연 클리핑
+          left -= availH; first = false;
+        }
+      }
+    });
+  });
+
+  return chain.then(function(){
+    var co = (j.company||{}).company_name || '기업';
+    var rn = (j.report||{}).recno || '';
+    var name = '아이템분석_' + co + (rn?('_'+rn):'') + '.pdf';
+    host.innerHTML = '';
+    if(mode === 'blob') return pdf.output('blob');
+    if(mode === 'datauristring') return pdf.output('datauristring');
+    pdf.save(name);
+    return name;
+  });
 }
 
 /* 분석 PDF — 운영자가 상담 데스크에서 쓸 종이 */
