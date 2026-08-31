@@ -12,7 +12,7 @@
 <style>
 /* ══════════════════════════════════════════════════════════════
    SIW 2026 투자상담회 — 참여기업 전용 페이지
-   설계정본 = 01_설계정본\설계정본_SIW투자상담회_v1.0.md
+   설계정본 = 01_설계정본\설계정본_SIW투자상담회_v2.0.md
    브랜드 토큰 = 지주 홈페이지 home.css 와 동일(가설치 · 미결 1)
    ══════════════════════════════════════════════════════════════ */
 :root{
@@ -129,6 +129,15 @@ input:focus{outline:2px solid var(--cb-line-brand);outline-offset:1px;border-col
 .msg.ok{background:#F0F8F4;color:var(--cb-ok);border:1px solid rgba(15,123,79,.18)}
 .hint{font-size:13px;color:var(--cb-muted);margin:12px 0 0}
 
+/* 접수번호·접속코드 — 메일을 보내지 않으므로 이 화면이 유일한 전달처다 */
+.keybox{background:#FDF2F5;border:1px solid var(--cb-line-brand);border-radius:10px;padding:14px 16px;margin:4px 0 14px}
+.krow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.klab{font-size:12.5px;font-weight:700;color:var(--cb-body);min-width:62px}
+.kval{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:17px;font-weight:700;
+      letter-spacing:.06em;color:var(--cb-deep);flex:1;word-break:break-all}
+.kcopy{padding:5px 12px;font-size:12.5px;flex:none}
+.knote{font-size:12.5px;color:var(--cb-body);margin:10px 0 0;line-height:1.6}
+
 /* 포털 */
 #portal{display:none}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-top:26px}
@@ -215,37 +224,35 @@ footer a:hover{color:var(--cb-primary)}
   <div class="wrap">
 
     <div id="gate">
-      <div class="panel" id="stepEmail">
+      <div class="panel" id="stepName">
         <h2>참여기업 로그인</h2>
-        <p class="sub">참여기업 명단의 <b>기업명과 대표자명</b>으로 확인한 뒤, 적어 주신 이메일로 인증번호를 보내드립니다.
-           <b>처음 로그인하실 때 적으신 이메일이 귀사의 로그인 주소가 됩니다.</b></p>
+        <p class="sub">참여기업 명단에 있는 <b>기업명</b>을 적어 주십시오.
+           <b>(주)·주식회사</b> 같은 표기나 띄어쓰기는 달라도 찾아냅니다.</p>
         <label for="fCompany">기업명</label>
         <input type="text" id="fCompany" placeholder="예: 주식회사 ○○○" autocomplete="organization">
+        <button class="btn btn-p" style="width:100%" id="btnFind" onclick="resolveCompany()">다음</button>
+        <div class="msg" id="m1"></div>
+        <p class="hint">명단에서 찾지 못하면 운영 담당자에게 연락해 주십시오.</p>
+      </div>
+
+      <div class="panel" id="stepClaim" style="display:none">
+        <h2 id="claimTitle">대표자명·이메일 등록</h2>
+        <p class="sub" id="claimSub"></p>
         <label for="fCeo">대표자명</label>
         <input type="text" id="fCeo" placeholder="예: 홍길동" autocomplete="name">
         <label for="fEmail">이메일</label>
         <input type="email" id="fEmail" placeholder="예: name@company.com" autocomplete="email">
 
-        <div class="consent">
+        <div class="consent" id="consentBox">
           <input type="checkbox" id="fConsent">
           <label for="fConsent"><b>[필수]</b> 개인정보 수집·이용에 동의합니다.
             기업명·대표자명·이메일을 참여기업 확인과 IR 자료 제작·전달에 <b>1년간</b> 이용하는 데 동의합니다.
             <a href="#privacy" onclick="document.querySelector('.privacy').scrollIntoView({behavior:'smooth'});return false;">안내 전문 보기</a></label>
         </div>
 
-        <button class="btn btn-p" style="width:100%" id="btnSend" onclick="requestOtp()">인증번호 받기</button>
-        <div class="msg" id="m1"></div>
-        <p class="hint">명단에 없거나 대표자명이 바뀌었다면 운영 담당자에게 연락해 주십시오.</p>
-      </div>
-
-      <div class="panel" id="stepOtp" style="display:none">
-        <h2>인증번호 입력</h2>
-        <p class="sub"><b id="maskMail"></b> 로 보낸 6자리 숫자를 입력해 주십시오. 유효시간은 10분입니다.</p>
-        <label for="fCode">인증번호</label>
-        <input type="text" id="fCode" class="otp" maxlength="6" inputmode="numeric" placeholder="000000" autocomplete="one-time-code">
-        <button class="btn btn-p" style="width:100%" id="btnVerify" onclick="verifyOtp()">확인</button>
+        <button class="btn btn-p" style="width:100%" id="btnClaim" onclick="claimCompany()">시작하기</button>
         <div class="msg" id="m2"></div>
-        <button class="btn btn-t" style="width:100%;margin-top:10px" onclick="backToEmail()">← 이메일 다시 입력</button>
+        <button class="btn btn-t" style="width:100%;margin-top:10px" onclick="backToName()">← 기업명 다시 입력</button>
       </div>
     </div>
 
@@ -258,11 +265,22 @@ footer a:hover{color:var(--cb-primary)}
       <div class="pgrid">
 
         <div class="pcard">
-          <div class="status wait" id="stApply">● 작성 전</div>
-          <h3>① 사업 정보 작성</h3>
-          <p class="d">접수 시스템에서 사업 아이템·고객·문제·솔루션과 기본 수치를 입력하시면 됩니다.
-             작성 도중 저장하고 나중에 이어서 쓰실 수 있습니다.</p>
-          <a class="btn btn-p" id="lnkApply" href="https://inno.cbnuholdings.com/" target="_blank" rel="noopener">사업 정보 작성하러 가기 →</a>
+          <div class="status wait" id="stApply">● 준비 중</div>
+          <h3>① 사업 정보 확인·수정</h3>
+          <p class="d">운영기관이 미리 넣어 둔 귀사의 사업 정보를 열어 확인하고 고치실 수 있습니다.
+             아래 <b>접수번호와 접속코드</b>로 로그인해 주십시오. 작성 도중 저장하고 나중에 이어서 쓰실 수 있습니다.</p>
+
+          <div class="keybox" id="keyBox" style="display:none">
+            <div class="krow"><span class="klab">접수번호</span><b class="kval" id="kRecno">—</b>
+              <button class="btn btn-t kcopy" onclick="copyKey('kRecno',this)">복사</button></div>
+            <div class="krow"><span class="klab">접속코드</span><b class="kval" id="kCode">—</b>
+              <button class="btn btn-t kcopy" onclick="copyKey('kCode',this)">복사</button></div>
+            <p class="knote">이 두 값은 <b>이 화면에서만</b> 안내됩니다. 메일로는 보내지 않으니 적어 두시거나 복사해 두십시오.
+               잃어버리셨더라도 이 페이지에 다시 로그인하시면 언제든 다시 보실 수 있습니다.</p>
+          </div>
+          <div class="msg" id="mInno" style="display:none"></div>
+
+          <a class="btn btn-p" id="lnkApply" href="https://inno.cbnuholdings.com/portal" target="_blank" rel="noopener">사업 정보 열러 가기 →</a>
         </div>
 
         <div class="pcard">
@@ -337,12 +355,12 @@ footer a:hover{color:var(--cb-primary)}
 
 <script>
 /* ══════════════════════════════════════════════════════════════
-   GAS 프록시 — 노션 SIW DB 조회 · OTP 발급/검증 · 드라이브 파일 중계
+   GAS 프록시 — 노션 SIW DB 조회 · 기업명 매칭/등록 · INNO 접수 연동 · 드라이브 파일 중계
    🔴 배포 후 아래 API 주소를 실제 웹앱 URL 로 바꾼다.
    ══════════════════════════════════════════════════════════════ */
 var API = 'https://script.google.com/macros/s/AKfycbx5JDTOlItoe2dHxmY5ownhgsot-HssH9eFCGYc84GIW__VNaQfzOgq1C4FptdnHCbn/exec';
 var TOKEN_KEY = 'siw2026_token';
-var pendingEmail = '', pendingCompany = '', pendingCeo = '', pendingConsent = false;
+var pendingCompany = '', pendingClaimed = false;
 
 function $(id){ return document.getElementById(id); }
 function say(el, text, kind){
@@ -367,79 +385,133 @@ function maskEmail(e){
   return head + '***@' + p[1];
 }
 
-/* ── 1단계: 인증번호 요청 ── */
-function requestOtp(){
+/* ── 1단계: 기업명 매칭 (인증번호 없음 · 결정 #23·#24) ── */
+function resolveCompany(){
   var company = $('fCompany').value.trim();
-  var ceo = $('fCeo').value.trim();
-  var email = $('fEmail').value.trim();
-  var consent = $('fConsent').checked;
   clear('m1');
   if (!company) return say('m1', '기업명을 입력해 주십시오.');
-  if (!ceo) return say('m1', '대표자명을 입력해 주십시오.');
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return say('m1', '이메일 형식을 확인해 주십시오.');
-  if (!consent) return say('m1', '개인정보 수집·이용에 동의하셔야 이용하실 수 있습니다.');
 
-  $('btnSend').disabled = true;
-  $('btnSend').textContent = '보내는 중…';
-  call({ action: 'requestOtp', company: company, ceo: ceo, email: email })
+  $('btnFind').disabled = true;
+  $('btnFind').textContent = '찾는 중…';
+  call({ action: 'resolveCompany', company: company })
     .then(function(j){
-      $('btnSend').disabled = false;
-      $('btnSend').textContent = '인증번호 받기';
-      if (!j.ok) return say('m1', j.message || '참여기업 명단에서 찾지 못했습니다. 운영 담당자에게 문의해 주십시오.');
-      pendingCompany = company; pendingCeo = ceo; pendingEmail = email; pendingConsent = consent;
-      $('maskMail').textContent = maskEmail(email);
-      $('stepEmail').style.display = 'none';
-      $('stepOtp').style.display = '';
-      $('fCode').focus();
+      $('btnFind').disabled = false;
+      $('btnFind').textContent = '다음';
+      if (!j.ok) return say('m1', j.message || '참여기업 명단에서 찾지 못했습니다.');
+
+      pendingCompany = company;
+      pendingClaimed = !!j.claimed;
+
+      if (pendingClaimed){
+        // 이미 등록된 기업 — 세 항목이 모두 맞아야 열린다
+        $('claimTitle').textContent = '참여기업 확인';
+        $('claimSub').innerHTML = '<b>' + esc(j.company) + '</b> — 등록된 이메일 <b>' + esc(j.hint) +
+          '</b> 입니다. 처음 등록하신 <b>대표자명과 이메일</b>을 그대로 적어 주십시오.';
+        $('consentBox').style.display = 'none';
+        $('btnClaim').textContent = '들어가기';
+      } else {
+        // 최초 등록 — 여기서 적은 값이 이 기업에 고정된다
+        $('claimTitle').textContent = '대표자명·이메일 등록';
+        $('claimSub').innerHTML = '<b>' + esc(j.company) + '</b> 을(를) 찾았습니다. ' +
+          '<b>처음 적으신 대표자명과 이메일이 귀사의 로그인 정보가 됩니다.</b> 정확히 적어 주십시오.';
+        $('consentBox').style.display = '';
+        $('btnClaim').textContent = '시작하기';
+      }
+      $('stepName').style.display = 'none';
+      $('stepClaim').style.display = '';
+      $('fCeo').focus();
     })
     .catch(function(){
-      $('btnSend').disabled = false;
-      $('btnSend').textContent = '인증번호 받기';
+      $('btnFind').disabled = false;
+      $('btnFind').textContent = '다음';
       say('m1', '연결에 실패했습니다. 잠시 후 다시 시도해 주십시오.');
     });
 }
 
-function backToEmail(){
-  $('stepOtp').style.display = 'none';
-  $('stepEmail').style.display = '';
-  clear('m2'); $('fCode').value = '';
+function backToName(){
+  $('stepClaim').style.display = 'none';
+  $('stepName').style.display = '';
+  clear('m2');
 }
 
-/* ── 2단계: 인증번호 확인 ── */
-function verifyOtp(){
-  var code = $('fCode').value.trim();
+/* ── 2단계: 등록·재진입 ── */
+function claimCompany(){
+  var ceo = $('fCeo').value.trim();
+  var email = $('fEmail').value.trim();
+  var consent = pendingClaimed ? true : $('fConsent').checked;
   clear('m2');
-  if (!/^\d{6}$/.test(code)) return say('m2', '6자리 숫자를 입력해 주십시오.');
+  if (!ceo) return say('m2', '대표자명을 입력해 주십시오.');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return say('m2', '이메일 형식을 확인해 주십시오.');
+  if (!consent) return say('m2', '개인정보 수집·이용에 동의하셔야 이용하실 수 있습니다.');
 
-  $('btnVerify').disabled = true;
-  $('btnVerify').textContent = '확인 중…';
-  call({ action: 'verifyOtp', company: pendingCompany, ceo: pendingCeo, email: pendingEmail, code: code, consent: pendingConsent })
+  var label = $('btnClaim').textContent;
+  $('btnClaim').disabled = true;
+  $('btnClaim').textContent = '확인 중…';
+  call({ action: 'claimCompany', company: pendingCompany, ceo: ceo, email: email, consent: consent })
     .then(function(j){
-      $('btnVerify').disabled = false;
-      $('btnVerify').textContent = '확인';
-      if (!j.ok) return say('m2', j.message || '인증번호가 맞지 않거나 유효시간이 지났습니다.');
+      $('btnClaim').disabled = false;
+      $('btnClaim').textContent = label;
+      if (!j.ok) return say('m2', j.message || '확인하지 못했습니다. 입력하신 내용을 다시 살펴봐 주십시오.');
       try { sessionStorage.setItem(TOKEN_KEY, j.token); } catch(e){}
-      openPortal(j.profile, j.files);
+      openPortal(j.profile, j.files, j.inno);
     })
     .catch(function(){
-      $('btnVerify').disabled = false;
-      $('btnVerify').textContent = '확인';
+      $('btnClaim').disabled = false;
+      $('btnClaim').textContent = label;
       say('m2', '연결에 실패했습니다. 잠시 후 다시 시도해 주십시오.');
     });
 }
 
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+
+/* 접수번호·접속코드 — 메일을 보내지 않으므로 이 화면이 유일한 전달처다(결정 #28·#29) */
+function showInnoKeys(inno){
+  var box = $('keyBox'), msg = $('mInno');
+  if (inno && inno.recno && inno.code){
+    $('kRecno').textContent = inno.recno;
+    $('kCode').textContent = inno.code;
+    box.style.display = '';
+    msg.style.display = 'none';
+    $('stApply').textContent = '● 열람 가능';
+    $('stApply').className = 'status done';
+  } else {
+    box.style.display = 'none';
+    msg.style.display = '';
+    msg.className = 'msg show err';
+    msg.textContent = (inno && inno.error)
+      ? '사업 정보를 준비하지 못했습니다 — 운영 담당자에게 연락해 주십시오. (' + inno.error + ')'
+      : '사업 정보를 준비하는 중입니다. 잠시 후 다시 들어와 주십시오.';
+  }
+}
+
+function copyKey(id, btn){
+  var v = $(id).textContent;
+  var done = function(){ var t = btn.textContent; btn.textContent = '복사됨'; setTimeout(function(){ btn.textContent = t; }, 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(v).then(done, function(){});
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = v; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch(e){}
+    document.body.removeChild(ta);
+  }
+}
+
 /* ── 포털 ── */
-function openPortal(profile, files){
+function openPortal(profile, files, inno){
   $('gate').style.display = 'none';
-  $('portal').style.display = '';
+  // 🔴 CSS 에 `#portal{display:none}` 이 걸려 있다. 인라인을 비우는 것(`''`)으로는 그 규칙이 되살아나
+  //    포털이 열리지 않는다 — 값을 명시해야 한다(2026-08-31 실측으로 잡음).
+  $('portal').style.display = 'block';
   $('navLogin').style.display = 'none';
   $('navOut').style.display = '';
   $('pTitle').textContent = (profile && profile.company ? profile.company : '참여기업') + ' 페이지';
 
-  var applied = profile && profile.recno;
-  $('stApply').className = 'status ' + (applied ? 'done' : 'wait');
-  $('stApply').textContent = applied ? '● 접수 완료 · ' + profile.recno : '● 작성 전';
-  if (applied) $('lnkApply').textContent = '작성 내용 수정하러 가기 →';
+  showInnoKeys(inno);
 
   renderFiles(files || []);
   window.scrollTo({ top: $('area').offsetTop - 80, behavior: 'smooth' });
@@ -521,12 +593,13 @@ function showGate(){
   try { token = sessionStorage.getItem(TOKEN_KEY) || ''; } catch(e){}
   if (!token) return;
   call({ action: 'me', token: token })
-    .then(function(j){ if (j.ok) openPortal(j.profile, j.files); })
+    .then(function(j){ if (j.ok) openPortal(j.profile, j.files, j.inno); })
     .catch(function(){});
 })();
 
-$('fCode').addEventListener('keydown', function(e){ if (e.key === 'Enter') verifyOtp(); });
-$('fEmail').addEventListener('keydown', function(e){ if (e.key === 'Enter') requestOtp(); });
+$('fCompany').addEventListener('keydown', function(e){ if (e.key === 'Enter') resolveCompany(); });
+$('fCeo').addEventListener('keydown', function(e){ if (e.key === 'Enter') $('fEmail').focus(); });
+$('fEmail').addEventListener('keydown', function(e){ if (e.key === 'Enter') claimCompany(); });
 </script>
 </body>
 </html>
