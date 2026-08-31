@@ -77,6 +77,8 @@ td.item{white-space:normal;max-width:280px;color:var(--cb-body);font-size:12.5px
 .pill.n{background:#F3F1F2;color:var(--off)}
 .pill.b{background:#EEF1F8;color:var(--siw-navy)}
 .how{font-size:11px;color:var(--cb-muted);margin-left:5px}
+.cname{color:var(--cb-primary);font-weight:700;cursor:pointer;text-decoration:none}
+.cname:hover{text-decoration:underline}
 
 /* 상세 */
 #drawer{position:fixed;top:0;right:0;width:min(760px,94vw);height:100vh;background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,.14);z-index:80;transform:translateX(100%);transition:transform .22s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
@@ -189,6 +191,7 @@ td.item{white-space:normal;max-width:280px;color:var(--cb-body);font-size:12.5px
     <h1>운영자 콘솔</h1>
     <span class="tag">SIW 2026</span>
     <div class="grow"></div>
+    <button id="btnFolders" onclick="ensureFolders(this)" style="display:none">📁 자료함 폴더 만들기</button>
     <button id="btnReload" onclick="load()" style="display:none">↻ 새로고침</button>
     <button id="btnOut" onclick="logout()" style="display:none">로그아웃</button>
   </div>
@@ -268,7 +271,7 @@ function login(){
 }
 function open_(){
   $('gate').style.display='none'; $('main').style.display='block';
-  $('btnOut').style.display=''; $('btnReload').style.display='';
+  $('btnOut').style.display=''; $('btnReload').style.display=''; $('btnFolders').style.display='';
   load();
 }
 function logout(){ try{ sessionStorage.removeItem(KEY); }catch(e){} location.reload(); }
@@ -336,7 +339,7 @@ function rowHTML(r){
     ? '<span class="pill g">'+r.fileCount+'건</span>'
     : (r.folder ? '<span class="pill y">폴더만</span>' : '<span class="pill n">폴더 없음</span>');
   return '<tr>'+
-    '<td><b>'+esc(r.company)+'</b></td>'+
+    '<td><a class="cname" onclick="detail(&quot;'+esc(r.recno||'')+'&quot;,&quot;'+esc(r.company)+'&quot;,&quot;'+r.pageId+'&quot;)">'+esc(r.company)+'</a></td>'+
     '<td>'+esc(r.ceo)+'</td>'+
     '<td>'+mailCell+'</td>'+
     '<td>'+recCell+'</td>'+
@@ -344,7 +347,7 @@ function rowHTML(r){
     '<td class="item">'+esc(r.ksic||'')+'</td>'+
     '<td>'+repCell+'</td>'+
     '<td>'+fileCell+'</td>'+
-    '<td>'+(r.recno?'<button class="btn sm" onclick="detail(\''+esc(r.recno)+'\',\''+esc(r.company)+'\')">상세</button>':'')+
+    '<td><button class="btn sm" onclick="detail(&quot;'+esc(r.recno||'')+'&quot;,&quot;'+esc(r.company)+'&quot;,&quot;'+r.pageId+'&quot;)">상세</button>'+
       ' <button class="btn sm" onclick="resetMail(\''+r.pageId+'\',\''+esc(r.company)+'\')">메일 해제</button></td>'+
   '</tr>';
 }
@@ -353,25 +356,46 @@ function rowHTML(r){
 function openDrawer(){ $('drawer').classList.add('open'); $('backdrop').classList.add('open'); }
 function closeDrawer(){ $('drawer').classList.remove('open'); $('backdrop').classList.remove('open'); }
 
-function detail(recno, company){
-  $('dTitle').textContent = company + ' · ' + recno;
+/* 자료함 폴더 만들기 — 명단이 늘 때마다 눌러도 안전하다(이미 있는 기업은 건너뛴다) */
+function ensureFolders(btn){
+  var t = btn.textContent; btn.disabled = true; btn.textContent = '만드는 중…';
+  call({action:'adminEnsureFolders'}).then(function(j){
+    btn.disabled = false; btn.textContent = t;
+    if(!j.ok){ alert(j.message||'폴더를 만들지 못했습니다.'); return; }
+    alert('폴더 생성 '+j.made+'건 · 이미 있어 건너뜀 '+j.skipped+'건'+
+          (j.failed && j.failed.length ? ' · 기록 실패: '+j.failed.join(', ') : ''));
+    load();
+  }).catch(function(){ btn.disabled=false; btn.textContent=t; alert('연결에 실패했습니다.'); });
+}
+
+function detail(recno, company, pageId){
+  $('dTitle').textContent = company + (recno ? (' · ' + recno) : ' · 접수 전');
   $('dBody').innerHTML = '<div class="empty">불러오는 중…</div>';
   openDrawer();
-  call({action:'adminDetail', recno:recno}).then(function(j){
+  DETAIL_PAGE = pageId || '';
+  call({action:'adminDetail', recno:recno, pageId:pageId||''}).then(function(j){
     if(!j.ok){ $('dBody').innerHTML='<div class="empty">'+esc(j.message)+'</div>'; return; }
     $('dBody').innerHTML = detailHTML(j);
+    var rs = j.reports || [];
+    if(rs.length) report(rs[0].id, 'internal');   // 최신 판본을 자동으로 펼친다
   }).catch(function(){ $('dBody').innerHTML='<div class="empty">연결에 실패했습니다.</div>'; });
 }
 
 function detailHTML(j){
+  // 한 장에 다 보이게 순서를 잡는다 — 기업 내용 → 분석 보고서 → IR 자료 → 상담 정보
   var h = '<div class="dsec"><h3>기본</h3><dl class="kv">'+
     kv('대표자', j.ceo) + kv('이메일', j.email) + kv('연락처', j.phone) +
-    kv('사업자번호', j.bizNo) + kv('진행상태', j.status) + kv('신청 Track', j.track) +
-    kv('업종(KSIC)', j.ksic) + kv('창업단계', j.stage) + kv('유료매출', j.hasRevenue===true?'있음':(j.hasRevenue===false?'없음':'')) +
+    kv('사업자번호', j.bizNo) + kv('진행상태', j.status) +
+    kv('업종(KSIC)', j.ksic) + kv('창업단계', j.stage) +
+    kv('유료매출', j.hasRevenue===true?'있음':(j.hasRevenue===false?'없음':'')) +
     kv('접수', (j.submittedAt||'').slice(0,16).replace('T',' ')) +
+    kv('최종수정', (j.updatedAt||'').slice(0,16).replace('T',' ')) +
     '</dl></div>';
 
-  h += lcHTML(j) + opsHTML(j);
+  h += lcHTML(j);          // ① 기업 내용 — 린캔버스(작성 주체 대조)
+  h += reportSec(j);       // ② 아이템 분석 보고서
+  h += filesSec(j);        // ③ IR 자료(자료함)
+  h += opsHTML(j);         // ④ 상담 정보 — 운영자 전용
 
   var d = j.data || {};
   var LCKEYS = {LC1:1,LC2:1,LC3:1,LC4:1,LC5:1,LC6:1,LC7:1,LC8:1,LC9:1};
@@ -391,29 +415,74 @@ function detailHTML(j){
   }
 
   if((j.attachments||[]).length){
-    h += '<div class="dsec"><h3>첨부</h3>'+j.attachments.map(function(a){
+    h += '<div class="dsec"><h3>기업이 올린 첨부</h3>'+j.attachments.map(function(a){
       return '<div class="rep"><span>'+esc(a.name||'')+'</span><span class="note">'+esc(a.kind||'')+'</span></div>';
     }).join('')+'</div>';
   }
+  return h;
+}
 
-  h += '<div class="dsec"><h3>STEP 0~6 분석 <span class="note">— 운영자 전용. 기업 화면에는 노출되지 않습니다</span></h3>';
+/* ② 아이템 분석 보고서 — 판본이 있으면 아래에서 자동으로 펼친다 */
+function reportSec(j){
+  var h = '<div class="dsec"><h3>아이템 분석 보고서 <span class="note" style="margin:0">— 운영자 전용. 기업 화면에는 노출되지 않습니다</span></h3>';
   h += '<div class="lcbar">'+
        (j.needRerun ? '<span class="rerun">재분석 필요 — 마지막 분석 뒤 기업이 내용을 고쳤습니다</span>' : '')+
        '<div class="grow" style="flex:1"></div>'+
-       '<button class="btn sm" onclick="analyze(\''+esc(j.recno)+'\')">분석 실행</button></div>'+
+       '<button class="btn sm" onclick="analyze(&quot;'+esc(j.recno)+'&quot;)">분석 실행</button></div>'+
        '<div id="runBox"></div>';
-  if(!(j.reports||[]).length) h += '<div class="empty">아직 분석 판본이 없습니다.</div>';
+  if(!(j.reports||[]).length) h += '<div class="empty">아직 분석 판본이 없습니다. 기업이 자료를 채운 뒤 「분석 실행」을 눌러 주십시오.</div>';
   else h += j.reports.map(function(r){
     return '<div class="rep"><b>v'+esc(r.version||'')+'</b>'+
       '<span class="pill '+(r.status==='published'?'g':'y')+'">'+esc(r.status||'')+'</span>'+
       '<span class="note">'+esc((r.created_at||'').slice(0,16).replace('T',' '))+'</span>'+
-      '<button class="btn sm" onclick="report('+r.id+',\'internal\')">내부</button>'+
-      '<button class="btn sm" onclick="report('+r.id+',\'mentor\')">멘토</button>'+
-      '<button class="btn sm" onclick="report('+r.id+',\'participant\')">기업용</button>'+
+      '<button class="btn sm" onclick="report('+r.id+',&quot;internal&quot;)">내부</button>'+
+      '<button class="btn sm" onclick="report('+r.id+',&quot;mentor&quot;)">멘토</button>'+
+      '<button class="btn sm" onclick="report('+r.id+',&quot;participant&quot;)">기업용</button>'+
       '</div>';
   }).join('');
-  h += '<div id="reportBox"></div></div>';
-  return h;
+  return h + '<div id="reportBox"></div></div>';
+}
+
+/* ③ IR 자료 — 드라이브 기업 폴더를 그대로 비춘다. 기업 화면의 자료함과 같은 목록이다. */
+function filesSec(j){
+  var fs = j.files || [];
+  var h = '<div class="dsec"><h3>IR 자료 <span class="note" style="margin:0">— 기업 자료함에 그대로 보이는 파일입니다</span></h3>';
+  if(!j.hasFolder){
+    h += '<div class="empty">자료함 폴더가 없습니다. 목록 화면의 「자료함 폴더 만들기」를 눌러 주십시오.</div>';
+  } else if(!fs.length){
+    h += '<div class="empty">아직 올린 자료가 없습니다. 드라이브의 이 기업 폴더에 파일을 넣으면 기업 화면에 바로 나타납니다.</div>';
+  } else {
+    h += fs.map(function(f){
+      return '<div class="rep"><span>'+esc(f.name||'')+'</span>'+
+        '<span class="note">'+fmtSize(f.size)+'</span>'+
+        '<span class="note">'+esc((f.updated||'').slice(0,10))+'</span>'+
+        '<div class="grow" style="flex:1"></div>'+
+        '<button class="btn sm" onclick="adminGetFile(&quot;'+esc(j.recno||'')+'&quot;,&quot;'+esc(f.id)+'&quot;,this,&quot;'+esc(DETAIL_PAGE||'')+'&quot;)">내려받기</button>'+
+        '</div>';
+    }).join('');
+  }
+  return h + '</div>';
+}
+
+function fmtSize(n){
+  if(!n && n!==0) return '';
+  if(n < 1024) return n+' B';
+  if(n < 1048576) return (n/1024).toFixed(0)+' KB';
+  return (n/1048576).toFixed(1)+' MB';
+}
+
+function adminGetFile(recno, fileId, btn, pageId){
+  var t = btn.textContent; btn.disabled = true; btn.textContent = '받는 중…';
+  call({action:'adminFile', recno:recno, pageId:pageId||'', fileId:fileId}).then(function(j){
+    btn.disabled = false; btn.textContent = t;
+    if(!j.ok){ alert(j.message||'내려받지 못했습니다.'); return; }
+    var bin = atob(j.data), arr = new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+    var url = URL.createObjectURL(new Blob([arr], {type: j.mimeType||'application/octet-stream'}));
+    var a = document.createElement('a');
+    a.href = url; a.download = j.name || 'file'; document.body.appendChild(a); a.click();
+    document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }).catch(function(){ btn.disabled=false; btn.textContent=t; alert('연결에 실패했습니다.'); });
 }
 
 function kv(k,v){ return v||v===0 ? '<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>' : ''; }
@@ -486,7 +555,8 @@ function analyze(recno, force){
   }).catch(function(){ box.innerHTML='<div class="empty">연결에 실패했습니다.</div>'; });
 }
 
-var REPORT = null;   // 마지막으로 연 보고서 — PDF 생성이 다시 씀
+var REPORT = null;       // 마지막으로 연 보고서 — PDF 생성이 다시 씀
+var DETAIL_PAGE = '';    // 지금 열린 기업의 노션 pageId — 접수 전 기업의 파일 요청에 쓴다
 
 function report(rid, view){
   var box = $('reportBox');
